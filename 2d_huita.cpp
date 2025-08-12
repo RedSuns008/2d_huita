@@ -37,13 +37,74 @@ public:
 };
 Mouse_ Mouse;  
 
-    RECT butt_close = { 0, 30, 0 , 80 };
-    bool g_btnHover = false;
+
+
+//void ShowBitmap(int x, int y, int width, int height, HBITMAP hBitmap, bool alpha) {
+//    HDC hMemDC = CreateCompatibleDC(window.context);
+//    HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemDC, hBitmap);
+//    BITMAP bm;
+//
+//    if (hOldBitmap) {
+//        GetObject(hBitmap, sizeof(HBITMAP), &bm);
+//        if (alpha) {
+//            TransparentBlt(window.context, x, y, width, height, hMemDC, NULL, NULL, width, height, RGB(0, 0, 0));
+//        }
+//        else {
+//            StretchBlt(window.context, x, y, width, height, hMemDC, NULL, NULL, bm.bmWidth, bm.bmHeight, SRCCOPY);
+//        }
+//        SelectObject(hMemDC, hOldBitmap);
+//    }
+//    DeleteDC(hMemDC);
+//}
+
+ void ShowBitmap(int x, int y, int width, int height, HBITMAP hBitmap, bool alpha);
+
+HBITMAP LoadBMP(const char* name)
+{
+    return (HBITMAP)LoadImageA(NULL, name, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+}
+
+class Button {
+public:
+
+    float x, y, width, height;
+    HBITMAP hBitmap;
+    HBITMAP hBitmapGlow;
+
+    bool CheckCollisionMouse() {
+        return Mouse.x < x + width && Mouse.x > x && Mouse.y < y + height && Mouse.y > y;
+    }
+    void Load(const char* imagename, const char* imagenameglow, float x_, float y_, float w, float h) {
+        x = x_; y = y_;
+        hBitmap = LoadBMP(imagename);
+        hBitmapGlow = LoadBMP(imagenameglow);
+        height = h * window.height;
+        width = w * window.width;
+        x = window.width / 2 - width * x;
+        y = window.height / 2 + height * y;
+    }
+    
+    bool Show() {
+        bool pw_collision = CheckCollisionMouse();
+       
+        /*if ((currentTime < healStartTime + healTime) || (AttackcurrentTime < AttackStartTime + AttackTime))
+        {
+            offset = 0;
+        }*/
+
+        ShowBitmap(x, y, width, height, pw_collision ? hBitmapGlow : hBitmap, true);
+        return pw_collision;
+    }
+   
+};
+
+Button Exit;
+HBITMAP Exit_bmp;
 
 // -------------------------------------------------------------------------------//Прототипы функций
-void DrawBackground(HDC hdc, int width, int height, HBITMAP hBitmap);
-void DrawCloseButton(HDC hdc, bool hover = false);
-bool CheckCollisionMouse();
+// void DrawBackground(HDC hdc, int width, int height, HBITMAP hBitmap);
+// void DrawCloseButton(HDC hdc, bool hover = false);
+// bool CheckCollisionMouse();
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -56,9 +117,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     window.width = GetSystemMetrics(SM_CXSCREEN);
     window.height = GetSystemMetrics(SM_CYSCREEN);
-
-    butt_close.left = window.width- 300;
-    butt_close.right = window.width - 200;
 
 
     g_hBackgroundBitmap = (HBITMAP)LoadImageW(NULL,L"phon1.bmp",IMAGE_BITMAP,0, 0,LR_LOADFROMFILE);
@@ -156,54 +214,13 @@ void DrawBackground(HDC hdc, int width, int height, HBITMAP hBitmap)
     DeleteDC(hdcMem);
 }
 
-void DrawCloseButton(HDC hdc, bool hover)
-{
-    int prevBkMode = SetBkMode(hdc, TRANSPARENT);
-    COLORREF prevTextColor = SetTextColor(hdc, RGB(255, 255, 255));
-    HBRUSH prevBrush = (HBRUSH)SelectObject(hdc, GetStockObject(NULL_BRUSH));
-
-    // Рисуем прямоугольник кнопки
-    if (hover) {
-        HBRUSH hoverBrush = CreateSolidBrush(RGB(255, 180, 230));
-        FillRect(hdc, &butt_close, hoverBrush);
-        DeleteObject(hoverBrush);
-    }
-    else {
-        HBRUSH normalBrush = CreateSolidBrush(RGB(200, 50, 50));
-        FillRect(hdc, &butt_close, normalBrush);
-        DeleteObject(normalBrush);
-    }
-
-    //// Рисуем крестик
-    //HPEN pen = CreatePen(PS_SOLID, 5, RGB(255, 255, 255));
-    //HPEN prevPen = (HPEN)SelectObject(hdc, pen);
-
-    //MoveToEx(hdc, butt_close.left + 30, butt_close.top + 30, NULL);
-    //LineTo(hdc, butt_close.right - 30, butt_close.bottom - 30);
-
-    //MoveToEx(hdc, butt_close.right - 30, butt_close.top + 30, NULL);
-    //LineTo(hdc, butt_close.left + 30, butt_close.bottom - 30);
-
-    const wchar_t* text = L"Закрыть";
-    DrawTextW(hdc, text, -1, &butt_close, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-    //SelectObject(hdc, prevPen);
-    SelectObject(hdc, prevBrush);
-    SetTextColor(hdc, prevTextColor);
-    SetBkMode(hdc, prevBkMode);
-    //DeleteObject(pen);
-}
-
-// Проверка коллизии TODO 
-bool CheckCollisionMouse()
-{
-    return (Mouse.x >= butt_close.left && Mouse.x <= butt_close.right &&
-        Mouse.y >= butt_close.top && Mouse.y <= butt_close.bottom);
-}
-
 // Оконная процедура с исправлениями
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    Exit.Load("Exit_butt.bmp", "Exit_butt.bmp", 12, -16, .04, .03);
+    Exit.Show();
+
+
     switch (uMsg)
     {
     case WM_DESTROY:
@@ -212,6 +229,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_PAINT:
     {
+
+
+
         PAINTSTRUCT ps;
         window.device_context = BeginPaint(hwnd, &ps);
         RECT clientRect;
@@ -228,12 +248,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         //// Текст в буфер
-        //SetBkMode(window.context, TRANSPARENT);
-        //SetTextColor(window.context, RGB(255, 255, 0));
-        //TextOutW(window.context, 50, 50, L"Figering, Huila!", 16);
-
-        // Рисуем кнопку закрытия
-        DrawCloseButton(window.context, g_btnHover);
+        SetBkMode(window.context, TRANSPARENT);
+        SetTextColor(window.context, RGB(255, 255, 0));
+        TextOutW(window.context, 50, 50, L"Figering, Huila!", 16);
 
         // Копируем буфер на экран
         BitBlt(
@@ -249,27 +266,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return 0;
     }
 
-    case WM_LBUTTONDOWN:
-        // Используем состояние мыши из объекта Mouse
-        if (CheckCollisionMouse()) {
-            DestroyWindow(hwnd);
-        }
-        return 0;
-
-    case WM_MOUSEMOVE:
-    {
-        // Исправление: объявляем переменные внутри блока {}
-        bool wasHover = g_btnHover;
-        g_btnHover = CheckCollisionMouse();
-
-        // Перерисовываем только если состояние изменилось
-        if (g_btnHover != wasHover) {
-            InvalidateRect(hwnd, &butt_close, FALSE);
-        }
-        return 0;
-    }
-
-    case WM_ERASEBKGND:
+     case WM_ERASEBKGND:
         return 1;
 
     default:
