@@ -1,11 +1,8 @@
 ﻿//-------------------------------------------------------------------------------//
 
-#ifndef UNICODE
-#define UNICODE
-#endif 
-#pragma comment(linker, "/ENTRY:wWinMainCRTStartup")
-#include <windows.h>
+#pragma comment(lib, "Msimg32.lib")
 
+#include <windows.h>
 // Глобальные переменные
 HBITMAP g_hBackgroundBitmap = NULL;
 HBITMAP g_hBufferBitmap = NULL;
@@ -39,25 +36,25 @@ Mouse_ Mouse;
 
 
 
-//void ShowBitmap(int x, int y, int width, int height, HBITMAP hBitmap, bool alpha) {
-//    HDC hMemDC = CreateCompatibleDC(window.context);
-//    HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemDC, hBitmap);
-//    BITMAP bm;
-//
-//    if (hOldBitmap) {
-//        GetObject(hBitmap, sizeof(HBITMAP), &bm);
-//        if (alpha) {
-//            TransparentBlt(window.context, x, y, width, height, hMemDC, NULL, NULL, width, height, RGB(0, 0, 0));
-//        }
-//        else {
-//            StretchBlt(window.context, x, y, width, height, hMemDC, NULL, NULL, bm.bmWidth, bm.bmHeight, SRCCOPY);
-//        }
-//        SelectObject(hMemDC, hOldBitmap);
-//    }
-//    DeleteDC(hMemDC);
-//}
+void ShowBitmap(int x, int y, int width, int height, HBITMAP hBitmap, bool alpha) {
+    HDC hMemDC = CreateCompatibleDC(window.context);
+    HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemDC, hBitmap);
+    BITMAP bm;
 
- void ShowBitmap(int x, int y, int width, int height, HBITMAP hBitmap, bool alpha);
+    if (hOldBitmap) {
+        GetObject(hBitmap, sizeof(HBITMAP), &bm);
+        if (alpha) {
+            TransparentBlt(window.context, x, y, width, height, hMemDC, NULL, NULL, width, height, RGB(0, 0, 0));
+        }
+        else {
+            StretchBlt(window.context, x, y, width, height, hMemDC, NULL, NULL, bm.bmWidth, bm.bmHeight, SRCCOPY);
+        }
+        SelectObject(hMemDC, hOldBitmap);
+    }
+    DeleteDC(hMemDC);
+}
+
+
 
 HBITMAP LoadBMP(const char* name)
 {
@@ -117,7 +114,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     window.width = GetSystemMetrics(SM_CXSCREEN);
     window.height = GetSystemMetrics(SM_CYSCREEN);
-
+    Exit.Load("Exit_butt.bmp", "Exit_butt.bmp", 12, -16, .1, .1);
+    Exit.Show();
 
     g_hBackgroundBitmap = (HBITMAP)LoadImageW(NULL,L"phon1.bmp",IMAGE_BITMAP,0, 0,LR_LOADFROMFILE);
 
@@ -217,8 +215,7 @@ void DrawBackground(HDC hdc, int width, int height, HBITMAP hBitmap)
 // Оконная процедура с исправлениями
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    Exit.Load("Exit_butt.bmp", "Exit_butt.bmp", 12, -16, .04, .03);
-    Exit.Show();
+   
 
 
     switch (uMsg)
