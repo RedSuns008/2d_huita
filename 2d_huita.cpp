@@ -15,24 +15,25 @@ struct Window {
     int width, height;
 };
 Window window;
-// Класс для отслеживания состояния мыши
+//------------------------------------------------------------------------------//
+
+//------------------------------------------------------------------------------//Mouse Class
 class Mouse_ {
 public:
     float x, y;
     bool L_butt, R_butt;
-
-    // Обновление состояния мыши
     void Update() {
         POINT p;
         GetCursorPos(&p);
         ScreenToClient(window.hWnd, &p);
         x = static_cast<float>(p.x);
         y = static_cast<float>(p.y);
-        L_butt = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
-        R_butt = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
+        L_butt = (GetAsyncKeyState(VK_LBUTTON));
+        R_butt = (GetAsyncKeyState(VK_RBUTTON));
     }
 };
-Mouse_ Mouse;  
+Mouse_ Mouse;
+//------------------------------------------------------------------------------//
 
 
 
@@ -47,7 +48,7 @@ void ShowBitmap(int x, int y, int width, int height, HBITMAP hBitmap, bool alpha
             TransparentBlt(window.context, x, y, width, height, hMemDC, NULL, NULL, width, height, RGB(0, 0, 0));
         }
         else {
-            StretchBlt(window.context, x, y, width, height, hMemDC, NULL, NULL, bm.bmWidth, bm.bmHeight, SRCCOPY);
+            StretchBlt(window.context, x, y, width, height, hMemDC, NULL, NULL, width, height, SRCCOPY);
         }
         SelectObject(hMemDC, hOldBitmap);
     }
@@ -68,31 +69,31 @@ public:
     HBITMAP hBitmap;
     HBITMAP hBitmapGlow;
 
-    bool CheckCollisionMouse() {
+ bool CheckCollisionMouse() {
         return Mouse.x < x + width && Mouse.x > x && Mouse.y < y + height && Mouse.y > y;
     }
     void Load(const char* imagename, const char* imagenameglow, float x_, float y_, float w, float h) {
         x = x_; y = y_;
         hBitmap = LoadBMP(imagename);
         hBitmapGlow = LoadBMP(imagenameglow);
-        height = h * window.height;
-        width = w * window.width;
-        x = window.width / 2 - width * x;
-        y = window.height / 2 + height * y;
+        height = h; // *window.height
+        width = w; // *window.width;
+        x = x;  // window.width / 2 - width *
+        y = y;  // window.height / 2 + height*fdsfdsfs
     }
     
     bool Show() {
         bool pw_collision = CheckCollisionMouse();
        
-        /*if ((currentTime < healStartTime + healTime) || (AttackcurrentTime < AttackStartTime + AttackTime))
-        {
-            offset = 0;
-        }*/
-
-        ShowBitmap(x, y, width, height, pw_collision ? hBitmapGlow : hBitmap, true);
+        ShowBitmap(x, y, width, height, pw_collision ? hBitmapGlow : hBitmap, false);
         return pw_collision;
     }
-   
+    void Mouse_Move() {
+        if (CheckCollisionMouse() && Mouse.R_butt) {
+        x = Mouse.x;
+        y = Mouse.y;
+        }
+    }
 };
 
 Button Exit;
@@ -102,6 +103,7 @@ HBITMAP Exit_bmp;
 // void DrawBackground(HDC hdc, int width, int height, HBITMAP hBitmap);
 // void DrawCloseButton(HDC hdc, bool hover = false);
 // bool CheckCollisionMouse();
+// -------------------------------------------------------------------------------//
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -114,10 +116,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     window.width = GetSystemMetrics(SM_CXSCREEN);
     window.height = GetSystemMetrics(SM_CYSCREEN);
-    Exit.Load("Exit_butt.bmp", "Exit_butt.bmp", 12, -16, .1, .1);
-    Exit.Show();
-
-    g_hBackgroundBitmap = (HBITMAP)LoadImageW(NULL,L"phon1.bmp",IMAGE_BITMAP,0, 0,LR_LOADFROMFILE);
+    Exit.Load("exit_butt.bmp", "exit_butt_glow.bmp", 100, 100, 123, 321);
+    g_hBackgroundBitmap = (HBITMAP)LoadImageA(NULL,"phon1.bmp",IMAGE_BITMAP,0, 0,LR_LOADFROMFILE);
 
     if (!g_hBackgroundBitmap) {
         HDC hdcScreen = GetDC(NULL);
@@ -151,9 +151,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
 
     // Создание окна
-    window.hWnd = CreateWindowW(
+        window.hWnd = CreateWindowW(
         CLASS_NAME,
-        L"ХУита на паре",
+        L"aNaL SeX <3",
         WS_POPUP,
         CW_USEDEFAULT, CW_USEDEFAULT,
         window.width, window.height,
@@ -203,8 +203,7 @@ void DrawBackground(HDC hdc, int width, int height, HBITMAP hBitmap)
     BITMAP bm;
     GetObject(hBitmap, sizeof(BITMAP), &bm);
 
-    StretchBlt(
-        hdc, 0, 0, width, height,
+    StretchBlt(hdc, 0, 0, width, height,
         hdcMem, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY
     );
 
@@ -220,6 +219,23 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch (uMsg)
     {
+
+    case WM_LBUTTONDOWN:
+        
+        if (Exit.CheckCollisionMouse()) {
+            MessageBox(hwnd, L" VSE OK", L"CheckCollision", MB_OK);
+        }
+        return 0;
+
+
+
+    case WM_KEYDOWN:
+        if (wParam == VK_ESCAPE) {
+            DestroyWindow(hwnd);
+        }
+        return 0;
+
+    
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
@@ -236,28 +252,20 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         // Рисуем фон в буфер
         if (g_hBackgroundBitmap) {
-            DrawBackground(
-                window.context,
-                clientRect.right,
-                clientRect.bottom,
-                g_hBackgroundBitmap
-            );
+            DrawBackground(window.context,clientRect.right,clientRect.bottom,g_hBackgroundBitmap);
         }
 
+        
+       
+        Exit.Show();
+        Exit.Mouse_Move();
         //// Текст в буфер
         SetBkMode(window.context, TRANSPARENT);
         SetTextColor(window.context, RGB(255, 255, 0));
-        TextOutW(window.context, 50, 50, L"Figering, Huila!", 16);
+       // TextOutW(window.context, 50, 50, L"Figering, Huila!", 16);
 
         // Копируем буфер на экран
-        BitBlt(
-            window.device_context,
-            0, 0,
-            clientRect.right, clientRect.bottom,
-            window.context,
-            0, 0,
-            SRCCOPY
-        );
+        BitBlt(window.device_context,0, 0,clientRect.right, clientRect.bottom,window.context,0, 0,SRCCOPY);
 
         EndPaint(hwnd, &ps);
         return 0;
@@ -265,7 +273,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
      case WM_ERASEBKGND:
         return 1;
-
+     
     default:
         return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
